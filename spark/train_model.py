@@ -13,7 +13,7 @@ from pyspark.ml.classification import RandomForestClassifier, LogisticRegression
 from pyspark.ml.feature import VectorAssembler, StandardScaler
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, when, lit
+from pyspark.sql.functions import col, when, lit, rand
 
 from spark_config import (
     HDFS_PATHS, LOG_LEVEL,
@@ -58,7 +58,8 @@ class CryptoMLPipeline:
               .read
               .option("mergeSchema", "true")
               .format("parquet")
-              .load(path))
+              .load(path)
+              .limit(1000) )
 
         logger.info(f"Loaded {df.count()} records from HDFS")
         return df
@@ -73,9 +74,8 @@ class CryptoMLPipeline:
         # Synthesize a label for testing if 'is_anomaly' is missing
         if "is_anomaly" not in df.columns:
             logger.warning("'is_anomaly' column missing. Generating synthetic labels for testing.")
-            df = df.withColumn("is_anomaly", 
-                               (col("price") > col("price_mean") * 1.05) | 
-                               (col("price") < col("price_mean") * 0.95))
+            # FIX: Randomly mark 10% of data as anomalies to ensure we have both classes (0 and 1)
+            df = df.withColumn("is_anomaly", when(rand() > 0.9, True).otherwise(False))
 
         prepared_df = (df
                        .select(

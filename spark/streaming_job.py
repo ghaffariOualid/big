@@ -46,7 +46,6 @@ class CryptoStreamingPipeline:
                  .builder
                  .appName("CryptoStreamingPipeline")
                  .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")
-                 .config("spark.sql.streaming.checkpointLocation", "/tmp/spark_checkpoint")
                  .config("spark.hadoop.fs.defaultFS", "hdfs://namenode:8020")
                  .getOrCreate())
         

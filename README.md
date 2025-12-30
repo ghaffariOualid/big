@@ -103,6 +103,11 @@ crypto-bigdata-platform/
 │   ├── utils.py                    # Helper utilities
 │   └── requirements.txt
 │
+├── dashboard/                      # Streamlit Real-time Dashboard
+│   ├── Dockerfile
+│   ├── app.py                      # Dashboard UI
+│   └── requirements.txt
+│
 ├── mlflow/                         # MLflow tracking
 │   ├── mlruns/                     # Experiment runs
 │   └── artifacts/                  # Model artifacts
@@ -123,11 +128,12 @@ crypto-bigdata-platform/
 |-----------|-----------|---------|
 | Message Broker | Apache Kafka | 7.5.1 |
 | Stream Processing | Apache Spark | 3.5.0 |
-| Distributed Storage | Hadoop HDFS | 3.3.4 |
+| Distributed Storage | Hadoop HDFS | 3.2.1 |
 | ML Experiment Tracking | MLflow | 2.10.0 |
-| Coordination | Zookeeper | (latest) |
-| Monitoring | Kafka UI | (latest) |
-| Language | Python | 3.10+ |
+| Coordination | Zookeeper | 7.5.1 |
+| Monitoring | Kafka UI | latest |
+| Dashboard | Streamlit | latest |
+| Language | Python | 3.9+ |
 
 ---
 
@@ -143,7 +149,7 @@ crypto-bigdata-platform/
 
 ```bash
 # Navigate to project directory
-cd crypto-bigdata-platform
+cd prjt/big
 
 # Create directories
 mkdir -p mlflow/{mlruns,artifacts} hdfs
@@ -159,8 +165,8 @@ docker-compose up -d
 docker-compose ps
 
 # Expected output:
-# kafka             Running
 # zookeeper         Running
+# kafka             Running
 # kafka-ui          Running
 # namenode          Running
 # datanode          Running
@@ -169,13 +175,13 @@ docker-compose ps
 # mlflow            Running
 # crypto-producer   Running
 # spark-streaming   Running
+# dashboard         Running
 ```
 
 ### 3. Monitor & Access Services
 
 | Service | URL | Purpose |
-|---------|-----|---------|
-| **Kafka UI** | http://localhost:8080 | Kafka topic monitoring |
+|---------|-----|---------|| **Dashboard** | http://localhost:8501 | Real-time crypto analytics (Streamlit) || **Kafka UI** | http://localhost:8080 | Kafka topic monitoring |
 | **Spark Master** | http://localhost:8081 | Spark cluster dashboard |
 | **HDFS Namenode** | http://localhost:9870 | HDFS file browser |
 | **MLflow** | http://localhost:5000 | Experiment tracking |
@@ -184,7 +190,7 @@ docker-compose ps
 
 ```bash
 # Check Kafka topics
-docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092
+docker-compose exec kafka kafka-topics --list --bootstrap-server kafka:29092
 
 # Expected topics:
 # crypto_raw
@@ -195,7 +201,7 @@ docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092
 
 # Read messages from crypto_raw topic
 docker-compose exec kafka kafka-console-consumer \
-  --bootstrap-server localhost:9092 \
+  --bootstrap-server kafka:29092 \
   --topic crypto_raw \
   --from-beginning \
   --max-messages 5
@@ -204,7 +210,10 @@ docker-compose exec kafka kafka-console-consumer \
 ### 5. Train ML Models
 
 ```bash
-# Submit training job to Spark
+# Run training job directly
+docker exec spark-master python /app/train_model.py
+
+# Or use spark-submit:
 docker-compose exec spark-master spark-submit \
   --master spark://spark-master:7077 \
   --deploy-mode client \
@@ -396,6 +405,17 @@ docker-compose exec spark-master spark-submit \
 
 ## 📈 Monitoring & Observability
 
+### Dashboard (Real-time Analytics)
+
+- **URL**: http://localhost:8501
+- **Technology**: Streamlit
+- **Features**:
+  - Real-time crypto price charts
+  - Anomaly alerts visualization
+  - ML model predictions
+  - System status monitoring
+  - Kafka consumer metrics
+
 ### Kafka UI (Topic Monitoring)
 
 - **URL**: http://localhost:8080
@@ -486,6 +506,7 @@ docker-compose exec namenode hadoop fs -count /data/crypto/clean/
 ```python
 COINGECKO_COINS = ['bitcoin', 'ethereum', 'cardano', ...]  # Add/remove coins
 POLLING_INTERVAL = 60  # seconds
+KAFKA_BOOTSTRAP_SERVERS = 'kafka:29092'  # Internal Docker network
 ```
 
 ### Spark Streaming (`spark/spark_config.py`)
@@ -493,6 +514,8 @@ POLLING_INTERVAL = 60  # seconds
 ```python
 BATCH_INTERVAL = 30  # seconds
 WATERMARK_DELAY = "10 minutes"  # For stateful operations
+KAFKA_BOOTSTRAP_SERVERS = 'kafka:29092'  # Internal Docker network
+HDFS_NAMENODE = 'hdfs://namenode:8020'  # HDFS connection
 ANOMALY_THRESHOLDS = {
     'z_score': 3.0,       # Standard deviations
     'volume_spike': 2.0,  # 2x normal volume

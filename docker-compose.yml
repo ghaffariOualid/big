@@ -166,7 +166,7 @@ services:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
       - ./dashboard:/app
-      - ./hdfs:/data  # <--- THIS IS KEY: Access HDFS files locally
+      - ./hdfs:/data  
     depends_on:
       - kafka
       - namenode

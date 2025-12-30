@@ -1,0 +1,15 @@
+artifact_uri: /artifacts/289540311163901162/e554d1a7de554fa888ff8df2cd0ab6e3/artifacts
+end_time: 1767044985808
+entry_point_name: ''
+experiment_id: '289540311163901162'
+lifecycle_stage: active
+run_id: e554d1a7de554fa888ff8df2cd0ab6e3
+run_name: Anomaly_Detection
+run_uuid: e554d1a7de554fa888ff8df2cd0ab6e3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1767044668134
+status: 3
+tags: []
+user_id: root
